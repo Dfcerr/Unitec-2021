@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-int tp4056 = 12;//Entrada del modo tp4056
-int boc = 11; //bateria o cargador
+#define tp4056 12;//Entrada del modo tp4056
+#define boc 11; //bateria o cargador
 
 int cod = 0; // carga o descarga (esta variable luego puede ser usada para el modo ahorro de bateria)
 
