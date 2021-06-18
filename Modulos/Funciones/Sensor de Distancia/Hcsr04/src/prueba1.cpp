@@ -1,30 +1,30 @@
 // Hola :D
-int TRIG = 10;
-int ECO = 9;
-int LED = 13;
+#define TRIG 10
+#define ECO  9
+#define boton_d  8
 
-int duracion;
 int distancia;
  
-void setup(){
+void setup() 
+{
 	pinMode(TRIG, OUTPUT);
-	pinMode(ECO, INPUT);
-	pinMode(LED, OUTPUT);
     Serial.begin(9600);
 } 
 void loop()
+{   
+    if(digitalRead(boton_d))
+        distancia = d_ultra();
+    
+    Serial.println(distancia);
+    delay(200);
+}
+
+int d_ultra()
 {
+    int duracion;
     digitalWrite(TRIG, HIGH);
     delay(1);
     digitalWrite(TRIG, LOW);
     duracion = pulseIn(ECO,HIGH);
-    distancia = duracion / 58.2;
-    Serial.println(distancia);
-    delay(200); 
-    if (distancia <= 20 && distancia >= 0)
-    {
-        digitalWrite(LED , HIGH);
-        delay(distancia * 10);
-        digitalWrite(LED, LOW);// 5>0 , MANDE UNA SEÑAL A UN SISTEMA DE VIBRACION.
-    }
+    return (duracion / 58.2);
 }

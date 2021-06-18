@@ -69,9 +69,9 @@ void que_color()// en esta funcion se tiene que intentar determinar un color en 
 //  saca el valor ambiental
 //----------------------------------------------------------------------------------  
 //  convierte este valor de 0 a 255
-  R = map((((Ambiental/2.9)/crgbc(1))*100), 0, 100, 0, 255);
-  G = map((((Ambiental/2.9)/crgbc(2))*100), 0, 100, 0, 255);
-  B = map((((Ambiental/2.9)/crgbc(3))*100), 0, 100, 0, 255);
+  R = map((((crgbc(1)/Ambiental)*2.8)*100), 0, 100, 0, 255);
+  G = map((((crgbc(2)/Ambiental)*2.8)*100), 0, 100, 0, 255);
+  B = map((((crgbc(3)/Ambiental)*2.8)*100), 0, 100, 0, 255);
   digitalWrite(led, LOW);// apaga el led blanco que ya no es necesario
 //----------------------------------------------------------------------------------
 //  en este espacio con if segun un parametros se veria que colores van a ser  
