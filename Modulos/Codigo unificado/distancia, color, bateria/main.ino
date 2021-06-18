@@ -11,6 +11,7 @@
 #define boc 11 //bateria o cargador
 #define mh 10// entrada para forzar modo ahorro
 #define cc 9//cierre de carga
+#define boton_p 8//para dar el porcentaje
 //-----------------------------------------------------------------
 // Sensor_color
 #define led 4
@@ -86,10 +87,13 @@ void loop()
       que_color();    
       Serial.println("*************************************");
   }
-
-  Serial.print("porcentaje de bateria es: ");
-  Serial.print(porcentaje);
-  Serial.println("%");
+  
+  if(digitalRead(boton_p))
+  {
+    Serial.print("porcentaje de bateria es: ");
+    Serial.print(porcentaje);
+    Serial.println("%");   
+  }
   
   delay(1000);
 }

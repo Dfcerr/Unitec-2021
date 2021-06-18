@@ -5,6 +5,7 @@
 #define tp4056 12//Entrada del modo tp4056
 #define boc 11 //bateria o cargador
 #define cc 9//cierre de carga
+#define boton_p 8//para dar el porcentaje
 
 bool md_ahorro;
 int porcentaje;
