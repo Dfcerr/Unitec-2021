@@ -6,23 +6,23 @@
 //pines
 //-----------------------------------------------------------------
 // lector de bateria
-#define at 0// pin analogico de tension
-#define tp4056 12//Entrada del modo tp4056
-#define boc 11 //bateria o cargador
-#define mh 10// entrada para forzar modo ahorro
-#define cc 9//cierre de carga
-#define boton_p 8//para dar el porcentaje
+#define at 0//ea/ pin analogico de tension
+#define tp4056 10//e/ Entrada del modo tp4056
+#define boc 9 //s/ bateria o cargador
+#define cc 8//s/ cierre de carga
+#define mh 7//e/ entrada para forzar modo ahorro
+#define boton_p 6//e/ para dar el porcentaje
 //-----------------------------------------------------------------
 // Sensor_color
-#define led 4
-#define boton_c 5
-#define buzzer 6
+#define led 13//s/
+#define boton_c 12//e/
+#define buzzer 11//sa/
 //-----------------------------------------------------------------
 //-----------------------------------------------------------------
 // Sensor distancia
-#define TRIG 8
-#define ECO  7
-#define boton_d  6
+#define TRIG 4//s/
+#define ECO 3//e/
+#define boton_d 2//e/
 //-----------------------------------------------------------------
 //***********************************************************************************
 //***********************************************************************************
@@ -87,7 +87,7 @@ void loop()
       que_color();    
       Serial.println("*************************************");
   }
-  
+
   if(digitalRead(boton_p))
   {
     Serial.print("porcentaje de bateria es: ");
