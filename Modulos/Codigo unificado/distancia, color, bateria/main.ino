@@ -8,7 +8,7 @@
 // lector de bateria
 #define at 0//ea/ pin analogico de tension
 #define tp4056 10//e/ Entrada del modo tp4056
-#define boc 9 //s/ bateria o cargador
+#define boc 9 //s/ bateria o cargador 
 #define cc 8//s/ cierre de carga
 #define mh 7//e/ entrada para forzar modo ahorro
 #define boton_p 6//e/ para dar el porcentaje
@@ -29,16 +29,15 @@
 //  Variables
 //-----------------------------------------------------------------
 // lector de bateria
-int porcentaje;
-bool md_ahorro;
-bool cod;
+bool md_ahorro = 0;
+bool cod = 0;
 //-----------------------------------------------------------------
 // Sensor_color
 SparkFun_APDS9960 apds = SparkFun_APDS9960();
-uint8_t proximidad = 0;
 //-----------------------------------------------------------------
 // Sensor distancia
 int distancia;
+int dl = 0;
 //-----------------------------------------------------------------
 
 //***********************************************************************************
@@ -49,8 +48,11 @@ void setup()
 //iniciacion para el lector de bateria y carga
 //-----------------------------------------------------------------
 //pin mode
+//-----------------------------------------------------------------
+  pinMode(boton_p, INPUT_PULLUP);
   pinMode(cc, OUTPUT);
   pinMode(boc, OUTPUT);
+//-----------------------------------------------------------------
 //salida iniciada
   digitalWrite(cc, HIGH);//lo activa para que siempre este activado, solo se cierra cuando haga una lectura
 //-----------------------------------------------------------------
@@ -71,57 +73,69 @@ void setup()
 //***********************************************************************************
 void loop() 
 {
-  carga_o_descarga();
-  porcentaje_bateria();
-  modo_ahorro();
-
-  if(digitalRead(boton_d))
+  bateria(0);
+  
+  if(!digitalRead(boton_p))
   {
-    distancia = d_ultra();
-    Serial.print("distancia: ");
-    Serial.println(distancia);
+    Serial.print(bateria(1));
+    Serial.println("%");
   }
+
+  s_ultra();
 
   if(digitalRead(boton_c))
   {
-      que_color();    
+      crgbc();    
       Serial.println("*************************************");
   }
-
-  if(digitalRead(boton_p))
-  {
-    Serial.print("porcentaje de bateria es: ");
-    Serial.print(porcentaje);
-    Serial.println("%");   
-  }
   
-  delay(1000);
+  delay(300);dl+=300;
 }
 //***********************************************************************************
 //Funciones
 //***********************************************************************************
-int porcentaje_bateria()// funcion para sacar el porcentaje de bateria
+int bateria(bool m_boton)
 {
+  byte porcentaje;
+  bool tm = md_ahorro;
+//************************************************************************************************************
+// verificacion del modo de alimentacion de la bateria
+//--------------------------------
+  if(cod != digitalRead(tp4056))
+  {
+      if(digitalRead(tp4056) == 1)
+          Serial.println("se a conectado un cargador a la bateria");
+      else
+          Serial.println("se a desconectado el cargador de la bateria");
+  }
+//  Guarda variable del ultimo estado
+  cod = digitalRead(tp4056);
+//  Segun si esta en carga o descarga elige que fuente de alimetacion va a usar
+  if(!cod)
+      digitalWrite(boc, HIGH);
+  else
+      digitalWrite(boc, LOW);
+//************************************************************************************************************ 
 // si esta en modo carga cierra por un instante el proceso de carga para que este no afecte la lectura
 //------------------------------
-  if(digitalRead(tp4056))
+  if(!cod || m_boton)// esto hace que si no esta cargando o el boton esta presionado tome el porcentaje
   {
-    digitalWrite(cc, LOW);
-    delay(10);
-  }
+    if(cod)//si esta cargando desactiva la carga de la bateria
+    {
+      digitalWrite(cc, LOW);
+      delay(5);
+    }
 //------------------------------
 //saca el porcentaje de bateria 
 //--------------------------------------------------------------------------------
-  porcentaje = map(map(analogRead(at), 0, 1023, 0, 500), 320, 420, 0, 100);// el primer map saca la tension y segundo el porcentaje
+    porcentaje = map(map(analogRead(at), 0, 1023, 0, 500), 320, 420, 0, 100);// el primer map saca la tension y segundo el porcentaje
 //  los valores de 320 a 420 serian de 3.2 a 4.2 v, esto baria en funcion de la ocilacion de nuestra bateria, este es el normal
+  }
 //--------------------------------------------------------------------------------
   digitalWrite(cc, HIGH);//vuelve a activar el sistema de carga
-  return porcentaje;
-}
-//***********************************************************************************
-void modo_ahorro()//algoritmo de modo ahorro
-{
-   bool tm = md_ahorro;
+//************************************************************************************************************
+// verificacion del modo
+//--------------------------------
 // verifica que no este cargando la bateria, si esta cargando desactiva modo ahorro
 //--------------------------------
   if(cod)
@@ -148,29 +162,11 @@ void modo_ahorro()//algoritmo de modo ahorro
       else
         Serial.println("modo ahorro desactivado");
     }
-//---------------------------------------------------------
+//************************************************************************************************************
+  return porcentaje;//retorna porcentaje
 }
 //***********************************************************************************
-void carga_o_descarga()
-{
-//  Usa el ultimo estado de la carga para ver si hubo un cambio y en funcion a eso avisar al usuario    
-    if(cod != digitalRead(tp4056))
-    {
-        if(digitalRead(tp4056) == 1)
-            Serial.println("se a conectado un cargador a la bateria");
-        else
-            Serial.println("se a desconectado el cargador de la bateria");
-    }
-//  Guarda variable del ultimo estado
-    cod = digitalRead(tp4056);
-//  Segun si esta en carga o descarga elige que fuente de alimetacion va a usar
-    if(!cod)
-        digitalWrite(boc, HIGH);
-    else
-        digitalWrite(boc, LOW);
-}
-//***********************************************************************************
-void que_color()// en esta funcion se tiene que intentar determinar un color en concreto
+void crgbc()// en esta funcion se tiene que intentar determinar un color en concreto
 {
 //------------------------------------------------------------
   digitalWrite(led, HIGH);// prende un led blanco para mejorar la lectura
@@ -178,79 +174,112 @@ void que_color()// en esta funcion se tiene que intentar determinar un color en 
 // variables declaradas 
 //------------------------------------------------------------
   int cont = 0;
+  uint8_t proximidad;
   uint16_t R;
   uint16_t G;
   uint16_t B;
-  float Ambiental = crgbc(0);//  saca el valor ambiental
+  float Ambiental;
 //------------------------------------------------------------
 //se fija que este a una distancia optima  
 //----------------------------------------------------------------------------------
-  while(cont<2000)//espera 2s
+  while(cont<40)//espera 2s
   {
     apds.readProximity(proximidad);// lee la distancia del 9960
     if(proximidad>170&&proximidad<255)// si esta esta en estos parametros empieza a contar por 2s
     {
       cont++;// suma 1us al contador
-      analogWrite(buzzer, 1);// avisa que esta en pocision correcta
+      analogWrite(buzzer, 0);// avisa que esta en pocision correcta
     }
     else// si se sale del rango resetea el contador
     {
       cont = 0;// reset del contador de us
-      analogWrite(buzzer, 2);// indica que no esta en posicioon
+      analogWrite(buzzer, 1);// indica que no esta en posicioon
     }
-    delay(1);
+    delay(50);
   }
   analogWrite(buzzer, 0);// si todo salio bien apaga el indicador
+//------------------------------------------------------------
+// saca los colores puros
+//------------------------------------------------------------
+  apds.readAmbientLight(Ambiental);;//  saca el valor ambiental
+  apds.readRedLight(R); 
+  apds.readGreenLight(G); 
+  apds.readBlueLight(B); 
+//------------------------------------------------------------
 //  saca el valor ambiental
 //----------------------------------------------------------------------------------  
 //  convierte este valor de 0 a 255
-  R = map((((crgbc(1)/Ambiental)*2.8)*100), 0, 100, 0, 255);
-  G = map((((crgbc(2)/Ambiental)*2.8)*100), 0, 100, 0, 255);
-  B = map((((crgbc(3)/Ambiental)*2.8)*100), 0, 100, 0, 255);
+  R = map((((R/Ambiental)*2.8)*100), 0, 100, 0, 255);
+  G = map((((G/Ambiental)*2.8)*100), 0, 100, 0, 255);
+  B = map((((B/Ambiental)*2.8)*100), 0, 100, 0, 255);
   digitalWrite(led, LOW);// apaga el led blanco que ya no es necesario
 //----------------------------------------------------------------------------------
 //  en este espacio con if segun un parametros se veria que colores van a ser  
 
 //-----------------------------------------------------------------------------------
-// escribe el color (en este caso como aun no hice el if pongo el rgb mejorado)
+// Envia el color(en este caso como aun no hice el if pongo el rgb mejorado)
   Serial.println(R);
   Serial.println(G);
   Serial.println(B);
 }
 //***********************************************************************************
-int crgbc(uint16_t num)// en esta funcion sacamos los valores del sensor
+int m_distancia()
 {
-// toma un color segun el que se le pida
-  switch (num)
-  {
-    case 0:// la luz ambiental
-      apds.readAmbientLight(num);
-      Serial.print("Ambiental: ");
-      break;
-    case 1://Rojo
-      apds.readRedLight(num);
-      Serial.print("Rojo: ");
-      break;
-    case 2: // Verde
-      apds.readGreenLight(num);
-      Serial.print("Verde: ");
-      break;
-    case 3: // Azul
-      apds.readBlueLight(num);
-      Serial.print("Azul: ");
-      break;
-  }
-  Serial.println(num); // escribe el valor  
-  return num; // retorna el valor
+    dl = 0;//resetea el tiempo del contador
+//------------------------------------------------------------
+    int duracion, aux = 0;
+    byte error = 0;
+//------------------------------------------------------------
+//  saca un promedio en un tiempo de 50ms    
+//-----------------------------------------------------   
+    for (byte veces = 0; veces < 10; veces++)
+    {
+//-----------------------------------------------------        
+//      mide la distancia
+//----------------------------------------------------- 
+        digitalWrite(TRIG, HIGH);
+        delay(1);
+        digitalWrite(TRIG, LOW);
+        duracion = pulseIn(ECO,HIGH);
+//----------------------------------------------------- 
+//      se fija de que no haya errores
+//----------------------------------------------------- 
+        if(duracion > 0)
+            aux += duracion/58.2;
+        else
+            error++;
+        delay(5);
+    }
+//----------------------------------------------------- 
+//  segun los erroes que haya da un resultado
+//----------------------------------------------------- 
+    if(error < 3)
+    {
+        aux = aux/(10 - error);
+        return (aux);
+    }
+    else
+        return 999;
+//------------------------------------------------------------
 }
 //***********************************************************************************
-int d_ultra()
+void s_ultra()
 {
-    int duracion;
-    digitalWrite(TRIG, HIGH);
-    delay(1);
-    digitalWrite(TRIG, LOW);
-    duracion = pulseIn(ECO,HIGH);
-    return (duracion / 58.2);
+    if(digitalRead(boton_d))
+    {
+        distancia = m_distancia();
+        Serial.println(distancia);
+    }
+    if(dl > 1000 && !md_ahorro)
+    {
+        distancia = m_distancia();
+        if(distancia < 70)
+        {
+            analogWrite(buzzer, 5);
+            Serial.println("cuidado");
+            delay(500);
+            analogWrite(buzzer, 0);
+        }
+    }
 }
 //***********************************************************************************

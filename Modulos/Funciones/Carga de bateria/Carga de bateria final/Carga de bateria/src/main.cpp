@@ -7,7 +7,7 @@
 #define cc 9//cierre de carga
 #define boton_p 8//para dar el porcentaje
 
-bool md_ahorro;
+bool md_ahorro = 0;
 bool cod = 0;
 
 void setup() 
