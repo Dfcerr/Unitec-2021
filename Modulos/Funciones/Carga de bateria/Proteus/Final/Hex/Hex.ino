@@ -5,16 +5,16 @@
 #define tp4056 12//Entrada del modo tp4056
 #define boc 11 //bateria o cargador
 #define cc 9//cierre de carga
+#define boton_p 8//para dar el porcentaje
 
 bool md_ahorro;
-int porcentaje;
-bool cod;
-
+bool cod = 0;
 void setup() 
 {
   Serial.begin(9600);
 //Pin mode
 //-----------------------------------------------------------------
+  pinMode(boton_p, INPUT_PULLUP);
   pinMode(cc, OUTPUT);
   pinMode(boc, OUTPUT);
 //-----------------------------------------------------------------
@@ -23,38 +23,60 @@ void setup()
 
 void loop() 
 {
-  carga_o_descarga();
-  porcentaje_bateria();
-  modo_ahorro();
-  Serial.print(porcentaje);
-  Serial.println("%");
-  
-  delay(1000);
+  porcentaje_bateria(0);
+
+  if(!digitalRead(boton_p))
+  {
+    Serial.print(porcentaje_bateria(1));
+    Serial.println("%");
+  }
+
+  delay(300);
 }
 //***********************************************************************************
-int porcentaje_bateria()
+int porcentaje_bateria(bool m_boton)
 {
+  byte porcentaje;
+  bool tm = md_ahorro;
+
+//************************************************************************************************************
+// verificacion del modo de alimentacion de la bateria
+//--------------------------------
+  if(cod != digitalRead(tp4056))
+  {
+      if(digitalRead(tp4056) == 1)
+          Serial.println("se a conectado un cargador a la bateria");
+      else
+          Serial.println("se a desconectado el cargador de la bateria");
+  }
+//  Guarda variable del ultimo estado
+  cod = digitalRead(tp4056);
+//  Segun si esta en carga o descarga elige que fuente de alimetacion va a usar
+  if(!cod)
+      digitalWrite(boc, HIGH);
+  else
+      digitalWrite(boc, LOW);
+//************************************************************************************************************ 
 // si esta en modo carga cierra por un instante el proceso de carga para que este no afecte la lectura
 //------------------------------
-  if(digitalRead(tp4056))
+  if(!cod || m_boton)// esto hace que si no esta cargando o el boton esta presionado tome el porcentaje
   {
-    digitalWrite(cc, LOW);
-    delay(10);
-  }
+    if(cod)//si esta cargando desactiva la carga de la bateria
+    {
+      digitalWrite(cc, LOW);
+      delay(5);
+    }
 //------------------------------
 //saca el porcentaje de bateria 
 //--------------------------------------------------------------------------------
-  porcentaje = map(map(analogRead(at), 0, 1023, 0, 500), 320, 420, 0, 100);// el primer map saca la tension y segundo el porcentaje
+    porcentaje = map(map(analogRead(at), 0, 1023, 0, 500), 320, 420, 0, 100);// el primer map saca la tension y segundo el porcentaje
 //  los valores de 320 a 420 serian de 3.2 a 4.2 v, esto baria en funcion de la ocilacion de nuestra bateria, este es el normal
+  }
 //--------------------------------------------------------------------------------
   digitalWrite(cc, HIGH);//vuelve a activar el sistema de carga
-  return porcentaje;
-}
-
-//***********************************************************************************
-void modo_ahorro()//algoritmo de modo ahorro
-{
-   bool tm = md_ahorro;
+//************************************************************************************************************
+// verificacion del modo
+//--------------------------------
 // verifica que no este cargando la bateria, si esta cargando desactiva modo ahorro
 //--------------------------------
   if(cod)
@@ -81,26 +103,7 @@ void modo_ahorro()//algoritmo de modo ahorro
       else
         Serial.println("modo ahorro desactivado");
     }
-//---------------------------------------------------------
-}
-
-//***********************************************************************************
-void carga_o_descarga()
-{
-//  Usa el ultimo estado de la carga para ver si hubo un cambio y en funcion a eso avisar al usuario    
-    if(cod != digitalRead(tp4056))
-    {
-        if(digitalRead(tp4056) == 1)
-            Serial.println("se a conectado un cargador a la bateria");
-        else
-            Serial.println("se a desconectado el cargador de la bateria");
-    }
-//  Guarda variable del ultimo estado
-    cod = digitalRead(tp4056);
-//  Segun si esta en carga o descarga elige que fuente de alimetacion va a usar
-    if(!cod)
-        digitalWrite(boc, HIGH);
-    else
-        digitalWrite(boc, LOW);
+//************************************************************************************************************
+  return porcentaje;//retorna porcentaje
 }
 //***********************************************************************************
