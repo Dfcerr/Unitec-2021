@@ -7,21 +7,21 @@
 //-----------------------------------------------------------------
 // lector de bateria
 #define at 0//ea/ pin analogico de tension
-#define tp4056 10//e/ Entrada del modo tp4056
-#define boc 9 //s/ bateria o cargador 
-#define cc 8//s/ cierre de carga
-#define mh 7//e/ entrada para forzar modo ahorro
-#define boton_p 6//e/ para dar el porcentaje
+#define tp4056 12//e/ Entrada del modo tp4056
+#define boc 11 //s/ bateria o cargador 
+#define cc 10//s/ cierre de carga
+#define mh 6//e/ entrada para forzar modo ahorro
+#define boton_p 5//e/ para dar el porcentaje
 //-----------------------------------------------------------------
 // Sensor_color
 #define led 13//s/
-#define boton_c 12//e/
-#define buzzer 11//sa/
+#define boton_c 4//e/
+#define buzzer 9//sa/
 //-----------------------------------------------------------------
 //-----------------------------------------------------------------
 // Sensor distancia
-#define TRIG 4//s/
-#define ECO 3//e/
+#define TRIG 8//s/
+#define ECO 7//e/
 #define boton_d 2//e/
 //-----------------------------------------------------------------
 //***********************************************************************************
