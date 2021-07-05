@@ -104,7 +104,7 @@ int bateria(bool m_boton)
   if(cod != digitalRead(tp4056))
   {
       if(digitalRead(tp4056) == 1)
-          Serial.println("se a conectado un cargador a la bateria");
+          Serial.println("se a conectado el cargador de la bateria");
       else
           Serial.println("se a desconectado el cargador de la bateria");
   }
